@@ -1,18 +1,22 @@
 import streamlit as st
 import plotly.express as px
 import pandas as pd
-from pytrends.request import TrendReq
 import time
+from pytrends.request import TrendReq
 
 # Set page title and layout
 st.set_page_config(page_title="Zero-Click & Search Trends Demo", layout="centered")
 
-# Initialize pytrends
-try:
-    pytrends = TrendReq(hl='en-US', tz=360)
-except Exception as e:
-    st.error(f"Error initializing Google Trends: {e}")
-    pytrends = None
+# Initialize pytrends with retry logic
+def init_pytrends():
+    try:
+        pytrends = TrendReq(hl='en-US', tz=360, retries=3, backoff_factor=0.5)
+        return pytrends
+    except Exception as e:
+        st.error(f"Error initializing Google Trends: {e}")
+        return None
+
+pytrends = init_pytrends()
 
 # Title
 st.title("Zero-Click Search & Search Volume Trends")
@@ -67,7 +71,7 @@ except FileNotFoundError:
     st.error("Search volume dataset not found. Using sample data.")
     df_search = pd.DataFrame(sample_data)
 
-# API Key Input
+# API Key Input (placeholder for other APIs)
 st.subheader("Google Trends Integration")
 api_key = st.text_input("Enter your Google API Key (optional for Google Trends)", type="password")
 st.write("Note: Google Trends via pytrends does not require an API key, but you can enter one if using a different Google API.")
@@ -107,7 +111,10 @@ if selected_term and pytrends:
         else:
             st.warning(f"No Google Trends data found for '{selected_term}'. Try another term or check spelling.")
     except Exception as e:
-        st.error(f"Error fetching Google Trends data: {e}")
+        if "429" in str(e):
+            st.error("Google Trends rate limit reached (HTTP 429). Please wait a few minutes and try again, or use the local dataset/CSV upload.")
+        else:
+            st.error(f"Error fetching Google Trends data: {e}")
 elif selected_term:
     st.error("Google Trends integration unavailable. Please check your connection or try again later.")
 
