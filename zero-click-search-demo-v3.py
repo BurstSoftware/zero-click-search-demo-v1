@@ -100,7 +100,7 @@ if selected_term and pytrends:
             fig_trends.update_layout(yaxis_title="Search Interest", xaxis_title="Month")
             st.plotly_chart(fig_trends, use_container_width=True)
 
-            # Estimate Zero-Click Impact (using relative interest as a proxy)
+            # Estimate Zero-Click Impact
             avg_interest = trends_df["Search Interest"].mean()
             zero_click_impact = avg_interest * 0.4  # 40% zero-click assumption
             st.write(f"**Estimated Zero-Click Impact**: If 40% of searches for '{selected_term}' are zero-click, approximately {int(zero_click_impact):.0f}% of relative search interest may not result in website clicks.")
@@ -144,7 +144,10 @@ if uploaded_file:
     df_uploaded = pd.read_csv(uploaded_file)
     if all(col in df_uploaded.columns for col in ["Search Term", "Month", "Search Volume"]):
         df_search = df_uploaded
-        st.success("Dataset奢
+        st.success("Dataset uploaded successfully! Select a search term to visualize.")
+        search_terms = df_search["Search Term"].unique().tolist()
+    else:
+        st.error("Uploaded CSV must contain 'Search Term', 'Month', and 'Search Volume' columns.")
 
 # Additional Insights
 st.subheader("What Are Zero-Click Searches?")
